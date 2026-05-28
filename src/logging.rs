@@ -5,14 +5,30 @@ use std::path::Path;
 use sysinfo::System;
 use std::panic;
 use backtrace::Backtrace;
+use fs2::FileExt;
 
-pub fn init() -> tracing_appender::non_blocking::WorkerGuard {
+pub fn init() -> (tracing_appender::non_blocking::WorkerGuard, fs::File) {
     let log_dir = "./flight_recorder/";
     if !Path::new(log_dir).exists() {
         fs::create_dir_all(log_dir).expect("failed to create log directory");
     }
 
-    let file_appender = rolling::daily(log_dir, "claudemini.log");
+    // Singleton Lock
+    let lock_file_path = Path::new(log_dir).join("claudemini.lock");
+    let lock_file = fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(&lock_file_path)
+        .expect("Failed to open lock file");
+
+    if let Err(_) = lock_file.try_lock_exclusive() {
+        eprintln!("❌ Error: Another instance of Claudemini is already running.");
+        eprintln!("Please quit all other Claudemini, claude-cli, or gemini-cli processes and run claudemini again.");
+        std::process::exit(1);
+    }
+
+    let pid = std::process::id();
+    let file_appender = rolling::daily(log_dir, format!("claudemini.log.{}", pid));
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     tracing_subscriber::registry()
@@ -23,9 +39,9 @@ pub fn init() -> tracing_appender::non_blocking::WorkerGuard {
     setup_panic_hook();
     log_system_snapshot();
     
-    tracing::info!("Flight recorder initialized at {}", log_dir);
+    tracing::info!(pid, "Flight recorder initialized at {}", log_dir);
     
-    guard
+    (guard, lock_file)
 }
 
 fn setup_panic_hook() {

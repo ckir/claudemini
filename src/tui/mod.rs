@@ -66,7 +66,7 @@ pub struct TuiManager;
 
 impl TuiManager {
     pub async fn run(debug: bool) -> Result<()> {
-        let _guard = if debug {
+        let _logging_data = if debug {
             Some(logging::init())
         } else {
             None

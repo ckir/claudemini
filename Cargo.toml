@@ -27,3 +27,4 @@ sysinfo = "0.39.2"
 backtrace = "0.3.76"
 uuid = { version = "1.23.1", features = ["v4"] }
 which = "8.0.2"
+fs2 = "0.4.3"
