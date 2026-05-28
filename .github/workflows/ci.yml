@@ -20,7 +20,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v4
     
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
@@ -44,7 +44,6 @@ jobs:
         cp target/release/claudemini staging/
         cp target/release/claude_mcp staging/
         cp target/release/gemini_mcp staging/
-        cd staging && tar -czvf ../claudemini-linux-amd64.tar.gz *
 
     - name: Package Artifacts (Windows)
       if: matrix.os == 'windows-latest'
@@ -53,22 +52,21 @@ jobs:
         Copy-Item target/release/claudemini.exe staging/
         Copy-Item target/release/claude_mcp.exe staging/
         Copy-Item target/release/gemini_mcp.exe staging/
-        Compress-Archive -Path staging/* -DestinationPath claudemini-windows-amd64.zip
 
     - name: Upload Release Binaries (Linux)
       if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: claudemini-linux-amd64
-        path: claudemini-linux-amd64.tar.gz
+        path: staging/
         retention-days: 7
 
     - name: Upload Release Binaries (Windows)
       if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: claudemini-windows-amd64
-        path: claudemini-windows-amd64.zip
+        path: staging/
         retention-days: 7
 
   release:
@@ -79,17 +77,29 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v4
 
-    - uses: actions/download-artifact@v8
+    - uses: actions/download-artifact@v4
       with:
         path: artifacts
-        merge-multiple: true
+
+    - name: Prepare Release Assets
+      run: |
+        mkdir release-assets
+        # Linux
+        cd artifacts/claudemini-linux-amd64
+        chmod +x *
+        tar -czvf ../../release-assets/claudemini-linux-amd64.tar.gz *
+        cd ../../
+        # Windows
+        cd artifacts/claudemini-windows-amd64
+        zip -r ../../release-assets/claudemini-windows-amd64.zip *
+        cd ../../
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        files: artifacts/*
+        files: release-assets/*
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
