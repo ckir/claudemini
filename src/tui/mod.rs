@@ -3,6 +3,7 @@ pub use events::{TuiEvent, UserAction};
 
 use crate::agent::{AgentRole, AppConfig};
 use crate::orchestrator::Orchestrator;
+use crate::logging;
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -64,7 +65,13 @@ impl<'a> App<'a> {
 pub struct TuiManager;
 
 impl TuiManager {
-    pub async fn run() -> Result<()> {
+    pub async fn run(debug: bool) -> Result<()> {
+        let _guard = if debug {
+            Some(logging::init())
+        } else {
+            None
+        };
+
         // Load config
         let config_path = "claudemini.toml";
         let config = if let Ok(content) = fs::read_to_string(config_path) {
@@ -90,6 +97,7 @@ impl TuiManager {
 
         // Create orchestrator
         let mut orchestrator = Orchestrator::new();
+        orchestrator.debug_mode = debug;
         orchestrator.set_channels(tui_tx.clone(), user_rx);
 
         // Orchestrator running state

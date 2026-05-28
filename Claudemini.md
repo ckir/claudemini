@@ -28,9 +28,14 @@ Claude and Gemini are not merged—they remain distinct voices. Claudemini’s p
 
 A tiny, elegant core. No heavy frameworks. No unnecessary abstraction. Just two agents, a loop, and a shared context.
 
-### **Transparency**
+### Transparency & Observability
 
-Every message, every turn, every refinement is visible and inspectable. No hidden state. No black‑box orchestration.
+Every message, every turn, every refinement is visible and inspectable. No hidden state. The "Flight Recorder" ensures that even internal failures are documented for AI-driven root cause analysis.
+
+### Resilience
+
+Claudemini is built to be robust. With system snapshots, panic hooks, and full-loop dry-run emulation, it prioritizes reliability and developer experience. The ability to emulate entire conversations with stubbed agents ensures the orchestration core is always battle-tested.
+
 
 ### **Extensibility**
 

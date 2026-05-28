@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test and Validate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build
+      run: cargo build --verbose
+
+    - name: Run unit tests
+      run: cargo test --verbose
+
+    - name: Run Dry Run Validation (Emulation)
+      run: cargo run --bin claudemini -- --dry-run --debug
+
+  release:
+    name: Build Release Binaries
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: claudemini-linux
+            asset_name: claudemini-linux-amd64
+          - os: windows-latest
+            artifact_name: claudemini-windows
+            asset_name: claudemini-windows-amd64.exe
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Build Release
+      run: cargo build --release --verbose
+
+    - name: Package Artifacts (Unix)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        mkdir -p staging
+        cp target/release/claudemini staging/
+        cp target/release/claude_mcp staging/
+        cp target/release/gemini_mcp staging/
+        cd staging && tar -czvf ../claudemini-linux-amd64.tar.gz *
+
+    - name: Package Artifacts (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        New-Item -ItemType Directory -Force -Path staging
+        Copy-Item target/release/claudemini.exe staging/
+        Copy-Item target/release/claude_mcp.exe staging/
+        Copy-Item target/release/gemini_mcp.exe staging/
+        Compress-Archive -Path staging/* -DestinationPath claudemini-windows-amd64.zip
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          claudemini-linux-amd64.tar.gz
+          claudemini-windows-amd64.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

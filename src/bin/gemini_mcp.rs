@@ -1,13 +1,31 @@
 use claudemini::mcp_server::CliAgentHandler;
+use claudemini::logging;
 use rust_mcp_sdk::mcp_server::server_runtime::create_server;
 use rust_mcp_sdk::mcp_server::{McpServerOptions, ToMcpServerHandler};
-use rust_mcp_sdk::schema::{Implementation, InitializeResult, ServerCapabilities, ServerCapabilitiesTools, LATEST_PROTOCOL_VERSION};
+use rust_mcp_sdk::schema::{Implementation, InitializeResult, ServerCapabilities, ServerCapabilitiesTools};
 use rust_mcp_sdk::{StdioTransport, TransportOptions, McpServer};
 use std::time::Duration;
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Enable "flight recorder" logging to file for debugging
+    #[arg(short, long)]
+    debug: bool,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let args = Args::parse();
+    let _guard = if args.debug {
+        Some(logging::init())
+    } else {
+        None
+    };
+
     let handler = CliAgentHandler {
+// ...
         name: "Gemini".to_string(),
         command: "gemini.ps1".to_string(),
         arg_flag: "-prompt".to_string(),
@@ -38,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
         capabilities,
         instructions: None,
         meta: None,
-        protocol_version: LATEST_PROTOCOL_VERSION.to_string(),
+        protocol_version: "2024-11-05".to_string(),
         server_info,
     };
 

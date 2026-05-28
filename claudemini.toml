@@ -1,0 +1,11 @@
+[[agents]]
+name = "Claude"
+persona = "Expert Rust Developer"
+mcp_command = "claude_mcp"
+mcp_args = []
+
+[[agents]]
+name = "Gemini"
+persona = "Strategic Solution Architect"
+mcp_command = "gemini_mcp"
+mcp_args = []

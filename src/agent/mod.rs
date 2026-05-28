@@ -42,6 +42,9 @@ pub struct AppConfig {
     pub agents: Vec<AgentConfig>,
 }
 
+#[cfg(test)]
+mod tests;
+
 impl AppConfig {
     pub fn default_config() -> Self {
         Self {

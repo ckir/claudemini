@@ -4,3 +4,4 @@ pub mod mcp;
 pub mod mcp_server;
 pub mod cli;
 pub mod tui;
+pub mod logging;
