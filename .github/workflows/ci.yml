@@ -37,6 +37,28 @@ jobs:
     - name: Run Dry Run Validation (Emulation)
       run: cargo run --bin claudemini -- --dry-run --debug
 
+    - name: Upload Binaries (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v7
+      with:
+        name: claudemini-linux-debug
+        path: |
+          target/debug/claudemini
+          target/debug/claude_mcp
+          target/debug/gemini_mcp
+        retention-days: 5
+
+    - name: Upload Binaries (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v7
+      with:
+        name: claudemini-windows-debug
+        path: |
+          target/debug/claudemini.exe
+          target/debug/claude_mcp.exe
+          target/debug/gemini_mcp.exe
+        retention-days: 5
+
   release:
     name: Build Release Binaries
     needs: test
